@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CS2 Crosshair Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center">
+  <div class="max-w-5xl w-full p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <div class="bg-zinc-900 rounded-2xl shadow-lg flex items-center justify-center">
+      <canvas id="preview" width="300" height="300" class="bg-zinc-800 rounded-xl"></canvas>
+    </div>
+
+    <div class="bg-zinc-900 rounded-2xl shadow-lg p-6 space-y-4">
+      <h1 class="text-2xl font-semibold">CS2 Crosshair Editor</h1>
+
+      <div class="grid grid-cols-2 gap-4">
+        <label class="text-sm">Size
+          <input id="size" type="range" min="1" max="20" value="5" class="w-full">
+        </label>
+        <label class="text-sm">Thickness
+          <input id="thickness" type="range" min="1" max="5" value="1" class="w-full">
+        </label>
+        <label class="text-sm">Gap
+          <input id="gap" type="range" min="-10" max="10" value="-3" class="w-full">
+        </label>
+        <label class="text-sm">Alpha
+          <input id="alpha" type="range" min="0" max="255" value="255" class="w-full">
+        </label>
+      </div>
+
+      <label class="text-sm block">Color
+        <input id="color" type="color" value="#00ff00" class="mt-1">
+      </label>
+
+      <label class="flex items-center gap-2 text-sm">
+        <input id="dot" type="checkbox"> Center Dot
+      </label>
+
+      <div>
+        <h2 class="font-medium mb-1">Console Commands</h2>
+        <textarea id="commands" class="w-full h-32 bg-zinc-800 rounded-lg p-2 text-sm" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('preview');
+    const ctx = canvas.getContext('2d');
+
+    const controls = ['size','thickness','gap','alpha','color','dot'];
+    controls.forEach(id => document.getElementById(id).addEventListener('input', draw));
+
+    function draw() {
+      const size = +sizeInput.value;
+      const thickness = +thicknessInput.value;
+      const gap = +gapInput.value;
+      const alpha = +alphaInput.value / 255;
+      const color = colorInput.value;
+      const dot = dotInput.checked;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = thickness;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(cx - gap - size, cy);
+      ctx.lineTo(cx - gap, cy);
+      ctx.moveTo(cx + gap, cy);
+      ctx.lineTo(cx + gap + size, cy);
+      ctx.moveTo(cx, cy - gap - size);
+      ctx.lineTo(cx, cy - gap);
+      ctx.moveTo(cx, cy + gap);
+      ctx.lineTo(cx, cy + gap + size);
+      ctx.stroke();
+
+      // insane unnacurate dot
+      if (dot) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, thickness + 1, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+
+      updateCommands();
+    }
+
+    function updateCommands() {
+      const hex = colorInput.value.replace('#','');
+      const r = parseInt(hex.substring(0,2),16);
+      const g = parseInt(hex.substring(2,4),16);
+      const b = parseInt(hex.substring(4,6),16);
+
+      commands.value = `cl_crosshairsize ${sizeInput.value}\n` +
+        `cl_crosshairthickness ${thicknessInput.value}\n` +
+        `cl_crosshairgap ${gapInput.value}\n` +
+        `cl_crosshairalpha ${alphaInput.value}\n` +
+        `cl_crosshaircolor 5\n` +
+        `cl_crosshaircolor_r ${r}\n` +
+        `cl_crosshaircolor_g ${g}\n` +
+        `cl_crosshaircolor_b ${b}\n` +
+        `cl_crosshairdot ${dotInput.checked ? 1 : 0}`;
+    }
+
+    const sizeInput = document.getElementById('size');
+    const thicknessInput = document.getElementById('thickness');
+    const gapInput = document.getElementById('gap');
+    const alphaInput = document.getElementById('alpha');
+    const colorInput = document.getElementById('color');
+    const dotInput = document.getElementById('dot');
+    const commands = document.getElementById('commands');
+
+    draw();
+  </script>
+</body>
+</html>
